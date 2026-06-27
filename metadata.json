@@ -1,0 +1,6 @@
+{
+  "name": "Phả Đồ Nghiêm Gia Đại Tộc",
+  "description": "Hệ thống Số hóa & Lưu trữ Phả hệ Dòng họ Nghiêm Gia với Cây gia phả tương tác, Biên niên sử và Trí tuệ nhân tạo Gemini biên soạn tiểu sử.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
