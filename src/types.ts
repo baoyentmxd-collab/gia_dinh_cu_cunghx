@@ -13,6 +13,7 @@ export interface Member {
   birthPlace: string;
   restingPlace: string;
   bio: string;
+  familyBranch?: string;
 }
 
 export interface MemorialTribute {

@@ -117,6 +117,17 @@ async function startServer() {
     } catch (e) {
       kids = [];
     }
+
+    let familyBranch = '';
+    let bio = String(row.bio !== undefined ? row.bio : '');
+    if (bio.startsWith('[Bầu đoàn: ')) {
+      const match = bio.match(/^\[Bầu đoàn: ([^\]]+)\]\s*(.*)/s);
+      if (match) {
+        familyBranch = match[1];
+        bio = match[2];
+      }
+    }
+
     return {
       id: String(row.id || ''),
       name: String(row.name || ''),
@@ -131,12 +142,19 @@ async function startServer() {
       title: String(row.title !== undefined ? row.title : ''),
       birthPlace: String(row.birthPlace !== undefined ? row.birthPlace : (row.birthplace !== undefined ? row.birthplace : '')),
       restingPlace: String(row.restingPlace !== undefined ? row.restingPlace : (row.restingplace !== undefined ? row.restingplace : '')),
-      bio: String(row.bio !== undefined ? row.bio : ''),
+      bio: bio,
+      familyBranch: familyBranch,
     };
   };
 
   const prepareMemberForDb = (member: any): any => {
     if (!member) return member;
+
+    const rawBio = String(member.bio || '');
+    const serializedBio = member.familyBranch 
+      ? `[Bầu đoàn: ${member.familyBranch}] ${rawBio}`
+      : rawBio;
+
     return {
       id: String(member.id || ''),
       name: String(member.name || ''),
@@ -151,7 +169,7 @@ async function startServer() {
       title: String(member.title || ''),
       birthPlace: String(member.birthPlace || ''),
       restingPlace: String(member.restingPlace || ''),
-      bio: String(member.bio || '')
+      bio: serializedBio
     };
   };
 

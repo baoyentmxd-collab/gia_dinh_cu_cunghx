@@ -210,6 +210,7 @@ export default function App() {
       birthPlace: (formData.get('birthPlace') as string) || '',
       restingPlace: (formData.get('restingPlace') as string) || '',
       bio: (formData.get('bio') as string) || '',
+      familyBranch: (formData.get('familyBranch') as string) || '',
       spouseId: spouseId,
       parentId: parentId,
       childrenIds: [],

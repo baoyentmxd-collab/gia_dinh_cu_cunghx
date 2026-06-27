@@ -16,6 +16,17 @@ export function AddMemberModal({
   selectedSpouseId,
   members,
 }: AddMemberModalProps) {
+  // Compute unique family branches for the suggestions list
+  const existingBranches = React.useMemo(() => {
+    const branches = new Set<string>();
+    members.forEach((m) => {
+      if (m.familyBranch && m.familyBranch.trim()) {
+        branches.add(m.familyBranch.trim());
+      }
+    });
+    return Array.from(branches).sort();
+  }, [members]);
+
   return (
     <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-amber-500/20 my-8">
@@ -153,6 +164,22 @@ export function AddMemberModal({
           </div>
 
           <div>
+            <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Bầu đoàn nhà cụ/ông/bà</label>
+            <input
+              name="familyBranch"
+              type="text"
+              list="family-branches-list"
+              placeholder="Ví dụ: Nhà cụ Nghiêm Văn A, Nhánh ông Nghiêm Văn B..."
+              className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
+            />
+            <datalist id="family-branches-list">
+              {existingBranches.map((branch) => (
+                <option key={branch} value={branch} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
             <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Sự Nghiệp / Đóng Góp</label>
             <textarea
               name="bio"
@@ -200,6 +227,17 @@ export function EditMemberModal({
 }: EditMemberModalProps) {
   const [bioText, setBioText] = useState(selectedMember.bio || '');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Compute unique family branches for the suggestions list
+  const existingBranches = React.useMemo(() => {
+    const branches = new Set<string>();
+    members.forEach((m) => {
+      if (m.familyBranch && m.familyBranch.trim()) {
+        branches.add(m.familyBranch.trim());
+      }
+    });
+    return Array.from(branches).sort();
+  }, [members]);
 
   // AI biography builder with server-side Gemini API
   const handleAIBiography = async () => {
@@ -263,6 +301,7 @@ export function EditMemberModal({
           birthPlace: (formData.get('birthPlace') as string) || '',
           restingPlace: (formData.get('restingPlace') as string) || '',
           bio: bioText,
+          familyBranch: (formData.get('familyBranch') as string) || '',
           spouseId: (formData.get('spouseId') as string) || '',
           parentId: (formData.get('parentId') as string) || '',
         };
@@ -425,6 +464,23 @@ export function EditMemberModal({
                   ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Bầu đoàn nhà cụ/ông/bà</label>
+            <input
+              name="familyBranch"
+              type="text"
+              list="edit-family-branches-list"
+              defaultValue={selectedMember.familyBranch || ''}
+              placeholder="Ví dụ: Nhà cụ Nghiêm Văn A, Nhánh ông Nghiêm Văn B..."
+              className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
+            />
+            <datalist id="edit-family-branches-list">
+              {existingBranches.map((branch) => (
+                <option key={branch} value={branch} />
+              ))}
+            </datalist>
           </div>
 
           {/* Biography Block with Gemini API Writer trigger button */}

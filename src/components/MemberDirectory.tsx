@@ -22,8 +22,20 @@ export default function MemberDirectory({
 }: MemberDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [generationFilter, setGenerationFilter] = useState('all');
+  const [familyBranchFilter, setFamilyBranchFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Compute unique family branches for the filter options
+  const familyBranches = useMemo(() => {
+    const branches = new Set<string>();
+    members.forEach((m) => {
+      if (m.familyBranch && m.familyBranch.trim()) {
+        branches.add(m.familyBranch.trim());
+      }
+    });
+    return Array.from(branches).sort();
+  }, [members]);
 
   // Filter members directory
   const filteredMembers = useMemo(() => {
@@ -33,6 +45,7 @@ export default function MemberDirectory({
         m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (m.birthPlace && m.birthPlace.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesGen = generationFilter === 'all' ? true : m.generation === parseInt(generationFilter);
+      const matchesBranch = familyBranchFilter === 'all' ? true : m.familyBranch === familyBranchFilter;
       const matchesGender = genderFilter === 'all' ? true : m.gender === genderFilter;
       const matchesStatus =
         statusFilter === 'all'
@@ -40,14 +53,14 @@ export default function MemberDirectory({
           : statusFilter === 'living'
           ? !m.isDeceased
           : m.isDeceased;
-      return matchesSearch && matchesGen && matchesGender && matchesStatus;
+      return matchesSearch && matchesGen && matchesBranch && matchesGender && matchesStatus;
     });
-  }, [members, searchQuery, generationFilter, genderFilter, statusFilter]);
+  }, [members, searchQuery, generationFilter, familyBranchFilter, genderFilter, statusFilter]);
 
   return (
     <div className="p-6 flex flex-col h-full overflow-y-auto print:overflow-visible print:p-0">
       {/* Directory Filter controls */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-stone-100 p-4 rounded-xl border border-stone-200 print:hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 bg-stone-100 p-4 rounded-xl border border-stone-200 print:hidden">
         <div>
           <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Thế Hệ</label>
           <select
@@ -60,6 +73,21 @@ export default function MemberDirectory({
             <option value="2">Thế Hệ II (Các Chi Ngành)</option>
             <option value="3">Thế Hệ III (Đời Con)</option>
             <option value="4">Thế Hệ IV (Đời Cháu Chắt)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Bầu đoàn nhà cụ/ông/bà</label>
+          <select
+            value={familyBranchFilter}
+            onChange={(e) => setFamilyBranchFilter(e.target.value)}
+            className="w-full bg-white border border-stone-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-rose-900 focus:outline-none font-bold"
+          >
+            <option value="all">Tất cả bầu đoàn</option>
+            {familyBranches.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -91,6 +119,7 @@ export default function MemberDirectory({
             onClick={() => {
               setSearchQuery('');
               setGenerationFilter('all');
+              setFamilyBranchFilter('all');
               setGenderFilter('all');
               setStatusFilter('all');
             }}
@@ -156,11 +185,16 @@ export default function MemberDirectory({
                     <span className={`text-xl print:hidden ${member.gender === 'male' ? 'text-sky-600' : 'text-rose-500'}`}>
                       {member.gender === 'male' ? '♂' : '♀'}
                     </span>
-                    <div className="text-sm font-bold text-stone-900 flex items-center gap-1.5 print:text-black">
+                    <div className="text-sm font-bold text-stone-900 flex flex-wrap items-center gap-1.5 print:text-black">
                       {member.name}
                       {member.isDeceased && (
                         <span className="bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider print:border print:border-stone-800 print:bg-white print:text-black">
                           Đã mất
+                        </span>
+                      )}
+                      {member.familyBranch && (
+                        <span className="bg-rose-50 text-rose-800 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider print:border print:border-stone-800">
+                          {member.familyBranch}
                         </span>
                       )}
                     </div>
