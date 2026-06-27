@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Member, AdminCredentials } from '../types';
+import { solarToLunarStr, calculateAgeInfo } from '../utils/lunar';
 
 interface AddMemberModalProps {
   onClose: () => void;
@@ -16,6 +17,10 @@ export function AddMemberModal({
   selectedSpouseId,
   members,
 }: AddMemberModalProps) {
+  const [birthInput, setBirthInput] = useState('');
+  const [deathInput, setDeathInput] = useState('');
+  const [isDeceasedSelect, setIsDeceasedSelect] = useState('false');
+
   // Compute unique family branches for the suggestions list
   const existingBranches = React.useMemo(() => {
     const branches = new Set<string>();
@@ -81,32 +86,63 @@ export function AddMemberModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Năm Sinh</label>
+              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Ngày/Tháng/Năm Sinh</label>
               <input
                 name="birthYear"
-                type="number"
-                placeholder="Ví dụ: 1985"
-                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
+                type="text"
+                placeholder="Ví dụ: 1985 hoặc 15/05/1985"
+                value={birthInput}
+                onChange={(e) => setBirthInput(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold focus:ring-1 focus:ring-rose-900"
               />
+              {birthInput && (
+                <div className="mt-1 text-[11px] font-bold text-stone-600 bg-stone-50 p-1.5 rounded border border-stone-200">
+                  {solarToLunarStr(birthInput) && (
+                    <div className="text-rose-950">☯️ {solarToLunarStr(birthInput)}</div>
+                  )}
+                  {calculateAgeInfo(birthInput, deathInput, isDeceasedSelect === 'true').hasAge && (
+                    <div className="text-stone-700">⏳ {calculateAgeInfo(birthInput, deathInput, isDeceasedSelect === 'true').text}</div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Đã tạ thế?</label>
-              <select name="isDeceased" className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold bg-white">
+              <select
+                name="isDeceased"
+                value={isDeceasedSelect}
+                onChange={(e) => setIsDeceasedSelect(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold bg-white focus:ring-1 focus:ring-rose-900"
+              >
                 <option value="false">Còn sống</option>
                 <option value="true">Đã khuất</option>
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Năm Mất (Nếu đã mất)</label>
-            <input
-              name="deathYear"
-              type="number"
-              placeholder="Chỉ điền khi chọn Đã Khuất"
-              className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
-            />
-          </div>
+          {isDeceasedSelect === 'true' && (
+            <div>
+              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Ngày/Tháng/Năm Mất</label>
+              <input
+                name="deathYear"
+                type="text"
+                placeholder="Ví dụ: 2024 hoặc 27/06/2024"
+                value={deathInput}
+                onChange={(e) => setDeathInput(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold focus:ring-1 focus:ring-rose-900"
+              />
+              {deathInput && (
+                <div className="mt-1 text-[11px] font-bold text-stone-600 bg-stone-50 p-1.5 rounded border border-stone-200">
+                  {solarToLunarStr(deathInput) && (
+                    <div className="text-amber-800">☯️ {solarToLunarStr(deathInput)}</div>
+                  )}
+                  {calculateAgeInfo(birthInput, deathInput, true).hasAge && (
+                    <div className="text-stone-700">⏳ {calculateAgeInfo(birthInput, deathInput, true).text}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Nơi Sinh / Quê Quán</label>
@@ -227,6 +263,9 @@ export function EditMemberModal({
 }: EditMemberModalProps) {
   const [bioText, setBioText] = useState(selectedMember.bio || '');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [birthInput, setBirthInput] = useState(selectedMember.birthYear || '');
+  const [deathInput, setDeathInput] = useState(selectedMember.deathYear || '');
+  const [isDeceasedSelect, setIsDeceasedSelect] = useState(selectedMember.isDeceased ? 'true' : 'false');
 
   // Compute unique family branches for the suggestions list
   const existingBranches = React.useMemo(() => {
@@ -378,20 +417,33 @@ export function EditMemberModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Năm Sinh</label>
+              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Ngày/Tháng/Năm Sinh</label>
               <input
                 name="birthYear"
-                type="number"
-                defaultValue={selectedMember.birthYear}
-                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
+                type="text"
+                placeholder="Ví dụ: 1985 hoặc 15/05/1985"
+                value={birthInput}
+                onChange={(e) => setBirthInput(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold focus:ring-1 focus:ring-rose-900"
               />
+              {birthInput && (
+                <div className="mt-1 text-[11px] font-bold text-stone-600 bg-stone-50 p-1.5 rounded border border-stone-200">
+                  {solarToLunarStr(birthInput) && (
+                    <div className="text-rose-950">☯️ {solarToLunarStr(birthInput)}</div>
+                  )}
+                  {calculateAgeInfo(birthInput, deathInput, isDeceasedSelect === 'true').hasAge && (
+                    <div className="text-stone-700">⏳ {calculateAgeInfo(birthInput, deathInput, isDeceasedSelect === 'true').text}</div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Đã tạ thế?</label>
               <select
                 name="isDeceased"
-                defaultValue={selectedMember.isDeceased ? 'true' : 'false'}
-                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold bg-white"
+                value={isDeceasedSelect}
+                onChange={(e) => setIsDeceasedSelect(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold bg-white focus:ring-1 focus:ring-rose-900"
               >
                 <option value="false">Còn sống</option>
                 <option value="true">Đã khuất</option>
@@ -399,15 +451,29 @@ export function EditMemberModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Năm Mất (Nếu đã mất)</label>
-            <input
-              name="deathYear"
-              type="number"
-              defaultValue={selectedMember.deathYear}
-              className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold"
-            />
-          </div>
+          {isDeceasedSelect === 'true' && (
+            <div>
+              <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Ngày/Tháng/Năm Mất</label>
+              <input
+                name="deathYear"
+                type="text"
+                placeholder="Ví dụ: 2024 hoặc 27/06/2024"
+                value={deathInput}
+                onChange={(e) => setDeathInput(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg p-2 text-sm font-bold focus:ring-1 focus:ring-rose-900"
+              />
+              {deathInput && (
+                <div className="mt-1 text-[11px] font-bold text-stone-600 bg-stone-50 p-1.5 rounded border border-stone-200">
+                  {solarToLunarStr(deathInput) && (
+                    <div className="text-amber-800">☯️ {solarToLunarStr(deathInput)}</div>
+                  )}
+                  {calculateAgeInfo(birthInput, deathInput, true).hasAge && (
+                    <div className="text-stone-700">⏳ {calculateAgeInfo(birthInput, deathInput, true).text}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold text-stone-500 uppercase mb-1">Nơi Sinh / Quê Quán</label>

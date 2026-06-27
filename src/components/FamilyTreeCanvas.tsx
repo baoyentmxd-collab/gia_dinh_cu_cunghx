@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Member } from '../types';
+import { getYearFromStr } from '../utils/lunar';
 
 interface FamilyTreeCanvasProps {
   members: Member[];
@@ -523,7 +524,7 @@ function MemberNodeCard({ member, isSelected, onSelect, lit }: MemberNodeCardPro
       <div className="mt-2 pt-1.5 border-t border-stone-100 print:border-stone-800 flex items-center justify-between text-[10px] text-stone-400 print:text-stone-800 font-bold">
         <span>Đời F{member.generation}</span>
         <span className="text-stone-500 print:text-stone-800">
-          {member.birthYear || '?'}-{member.isDeceased ? member.deathYear || '✝' : 'Nay'}
+          {getYearFromStr(member.birthYear) || '?'}-{member.isDeceased ? getYearFromStr(member.deathYear) || '✝' : 'Nay'}
         </span>
       </div>
     </div>

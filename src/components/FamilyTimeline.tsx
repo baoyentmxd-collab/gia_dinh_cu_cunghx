@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Member } from '../types';
+import { getYearFromStr } from '../utils/lunar';
 
 interface FamilyTimelineProps {
   members: Member[];
@@ -18,17 +19,19 @@ export default function FamilyTimeline({ members, onSelectMember }: FamilyTimeli
   const timelineEvents = useMemo(() => {
     const events: TimelineEvent[] = [];
     members.forEach((m) => {
-      if (m.birthYear) {
+      const bYear = getYearFromStr(m.birthYear);
+      if (bYear) {
         events.push({
-          year: parseInt(m.birthYear),
+          year: bYear,
           member: m,
           type: 'birth',
           text: `Cụ/Ông/Bà/Anh/Chị ${m.name} (${m.title || 'Thành viên'}) cất tiếng khóc chào đời tại ${m.birthPlace || 'Hà Nội'}.`,
         });
       }
-      if (m.isDeceased && m.deathYear) {
+      const dYear = m.isDeceased ? getYearFromStr(m.deathYear) : 0;
+      if (m.isDeceased && dYear) {
         events.push({
-          year: parseInt(m.deathYear),
+          year: dYear,
           member: m,
           type: 'death',
           text: `Cụ/Ông/Bà ${m.name} tạ thế về cõi vĩnh hằng, an táng và yên nghỉ tại ${m.restingPlace || 'Nghĩa trang dòng họ'}.`,

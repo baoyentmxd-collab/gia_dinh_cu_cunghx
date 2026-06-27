@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Member } from '../types';
+import { formatSolarDate, solarToLunarStr, calculateAgeInfo } from '../utils/lunar';
 
 interface MemberDirectoryProps {
   members: Member[];
@@ -206,8 +207,23 @@ export default function MemberDirectory({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-900 font-bold print:border print:border-stone-800 print:text-black">
                   {member.title}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500 font-bold print:border print:border-stone-800 print:text-black">
-                  {member.birthYear || '?'} – {member.isDeceased ? member.deathYear || 'Chưa rõ' : 'Nay'}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-700 font-medium print:border print:border-stone-800 print:text-black">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-stone-900">
+                      {formatSolarDate(member.birthYear)} – {member.isDeceased ? formatSolarDate(member.deathYear) : 'Nay'}
+                    </span>
+                    {solarToLunarStr(member.birthYear) && (
+                      <span className="text-[10px] text-stone-400 font-bold">
+                        Âm lịch: {solarToLunarStr(member.birthYear).replace(' (Âm lịch)', '').replace('Ngày ', 'mùng ')} 
+                        {member.isDeceased && member.deathYear && ` – ${solarToLunarStr(member.deathYear).replace(' (Âm lịch)', '').replace('Ngày ', 'mùng ')}`}
+                      </span>
+                    )}
+                    {calculateAgeInfo(member.birthYear, member.deathYear, member.isDeceased).hasAge && (
+                      <span className="text-[11px] text-rose-900 font-bold mt-0.5">
+                        {calculateAgeInfo(member.birthYear, member.deathYear, member.isDeceased).text}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500 font-bold print:border print:border-stone-800 print:text-black">
                   {member.birthPlace || '—'}
@@ -222,20 +238,24 @@ export default function MemberDirectory({
                   >
                     Xem Cây
                   </button>
-                  <span className="text-stone-300">|</span>
-                  <button
-                    onClick={() => onEdit(member)}
-                    className="text-amber-800 hover:text-amber-700 font-bold cursor-pointer"
-                  >
-                    Sửa
-                  </button>
-                  <span className="text-stone-300">|</span>
-                  <button
-                    onClick={() => onDelete(member.id)}
-                    className="text-red-600 hover:text-red-500 font-bold cursor-pointer"
-                  >
-                    Xóa
-                  </button>
+                  {isAdminLoggedIn && (
+                    <>
+                      <span className="text-stone-300">|</span>
+                      <button
+                        onClick={() => onEdit(member)}
+                        className="text-amber-800 hover:text-amber-700 font-bold cursor-pointer"
+                      >
+                        Sửa
+                      </button>
+                      <span className="text-stone-300">|</span>
+                      <button
+                        onClick={() => onDelete(member.id)}
+                        className="text-red-600 hover:text-red-500 font-bold cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

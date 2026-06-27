@@ -7,6 +7,7 @@ import FamilyTimeline from './components/FamilyTimeline';
 import MemorialHall from './components/MemorialHall';
 import FamilyStats from './components/FamilyStats';
 import Toast from './components/Toast';
+import { solarToLunarStr, formatSolarDate, calculateAgeInfo } from './utils/lunar';
 import {
   AddMemberModal,
   EditMemberModal,
@@ -1014,18 +1015,43 @@ export default function App() {
                 </span>
               </div>
               
-              <div className="flex justify-between border-b border-stone-100 pb-2">
-                <span className="text-stone-400 font-bold">Năm sinh:</span>
-                <span className="font-bold text-stone-800">{selectedMember.birthYear || 'Chưa rõ'}</span>
+              <div className="flex flex-col border-b border-stone-100 pb-2 gap-1">
+                <div className="flex justify-between">
+                  <span className="text-stone-400 font-bold">Ngày/Năm sinh (Dương):</span>
+                  <span className="font-bold text-stone-800">{formatSolarDate(selectedMember.birthYear)}</span>
+                </div>
+                {solarToLunarStr(selectedMember.birthYear) && (
+                  <div className="flex justify-between text-xs text-rose-950 font-bold">
+                    <span>Âm lịch:</span>
+                    <span>{solarToLunarStr(selectedMember.birthYear).replace(' (Âm lịch)', '')}</span>
+                  </div>
+                )}
+                {!selectedMember.isDeceased && calculateAgeInfo(selectedMember.birthYear).hasAge && (
+                  <div className="flex justify-between text-xs text-stone-600 font-bold bg-stone-50 p-1.5 rounded border border-stone-200 mt-1">
+                    <span>Tuổi hiện tại:</span>
+                    <span>{calculateAgeInfo(selectedMember.birthYear).text}</span>
+                  </div>
+                )}
               </div>
 
               {selectedMember.isDeceased && (
-                <div className="flex justify-between border-b border-stone-100 pb-2">
-                  <span className="text-stone-400 font-bold">Năm mất (Thọ):</span>
-                  <span className="font-bold text-stone-800">
-                    {selectedMember.deathYear || 'Chưa rõ'} 
-                    {selectedMember.birthYear && selectedMember.deathYear && ` (Thọ ${parseInt(selectedMember.deathYear) - parseInt(selectedMember.birthYear)} tuổi)`}
-                  </span>
+                <div className="flex flex-col border-b border-stone-100 pb-2 gap-1">
+                  <div className="flex justify-between">
+                    <span className="text-stone-400 font-bold">Ngày/Năm mất (Dương):</span>
+                    <span className="font-bold text-stone-800">{formatSolarDate(selectedMember.deathYear)}</span>
+                  </div>
+                  {solarToLunarStr(selectedMember.deathYear) && (
+                    <div className="flex justify-between text-xs text-amber-800 font-bold">
+                      <span>Âm lịch:</span>
+                      <span>{solarToLunarStr(selectedMember.deathYear).replace(' (Âm lịch)', '')}</span>
+                    </div>
+                  )}
+                  {calculateAgeInfo(selectedMember.birthYear, selectedMember.deathYear, true).hasAge && (
+                    <div className="flex justify-between text-xs text-rose-900 font-bold bg-amber-50 p-1.5 rounded border border-amber-200/50 mt-1">
+                      <span>Tuổi khi mất:</span>
+                      <span>{calculateAgeInfo(selectedMember.birthYear, selectedMember.deathYear, true).text}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
