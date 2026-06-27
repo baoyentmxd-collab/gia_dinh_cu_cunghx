@@ -18,22 +18,72 @@ export default function MemorialHall({
 }: MemorialHallProps) {
   const deceasedMembers = members.filter((m) => m.isDeceased);
 
-  // Tribute Form state
-  const [authorName, setAuthorName] = useState('');
+  // Tribute Form state (loaded from localStorage if available)
+  const [authorName, setAuthorName] = useState(() => localStorage.getItem('gia_pha_saved_author_name') || '');
   const [targetId, setTargetId] = useState('');
   const [content, setContent] = useState('');
+
+  // Candle modal state
+  const [showCandleModal, setShowCandleModal] = useState(false);
+  const [candleMember, setCandleMember] = useState<Member | null>(null);
+  const [candleAuthor, setCandleAuthor] = useState(() => localStorage.getItem('gia_pha_saved_author_name') || '');
+  const [candleContent, setCandleContent] = useState('');
+
+  const openCandleModal = (member: Member) => {
+    setCandleMember(member);
+    setCandleContent(`Kính dâng nén tâm hương, thành tâm tưởng niệm và tri ân sâu sắc công đức cao dày của Cụ/Ông/Bà ${member.name}. Nguyện cầu anh linh cụ độ trì bảo hộ cho con cháu luôn bình an, mạnh khỏe và thịnh vượng.`);
+    const savedName = localStorage.getItem('gia_pha_saved_author_name') || '';
+    setCandleAuthor(savedName);
+    setShowCandleModal(true);
+  };
+
+  const handleCandleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!candleMember) return;
+    if (!candleAuthor.trim() || !candleContent.trim()) return;
+
+    // Save author name to localStorage
+    localStorage.setItem('gia_pha_saved_author_name', candleAuthor.trim());
+    setAuthorName(candleAuthor.trim()); // Sync with main form
+
+    // Light the candle
+    onToggleCandle(candleMember.id);
+
+    // Save the tribute
+    onAddTribute({
+      memberId: candleMember.id,
+      authorName: candleAuthor.trim(),
+      content: candleContent.trim(),
+    });
+
+    // Close modal & reset
+    setShowCandleModal(false);
+    setCandleMember(null);
+  };
+
+  const handleToggleClick = (m: Member, isLit: boolean) => {
+    if (isLit) {
+      // Extinguish immediately
+      onToggleCandle(m.id);
+    } else {
+      // Open modal to enter information and tribute
+      openCandleModal(m);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!authorName.trim() || !content.trim()) return;
 
+    localStorage.setItem('gia_pha_saved_author_name', authorName.trim());
+    setCandleAuthor(authorName.trim()); // Sync with candle modal
+
     onAddTribute({
       memberId: targetId,
-      authorName,
-      content,
+      authorName: authorName.trim(),
+      content: content.trim(),
     });
 
-    setAuthorName('');
     setContent('');
     setTargetId('');
   };
@@ -97,7 +147,7 @@ export default function MemorialHall({
 
                 <button
                   id={`btn-candle-${m.id}`}
-                  onClick={() => onToggleCandle(m.id)}
+                  onClick={() => handleToggleClick(m, isLit)}
                   className={`mt-4 w-full py-1.5 px-4 rounded-xl text-xs tracking-wider cursor-pointer transition-all duration-300 ${
                     isLit
                       ? 'bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold shadow-[0_0_10px_rgba(245,158,11,0.4)]'
@@ -214,6 +264,96 @@ export default function MemorialHall({
         </div>
         <span>Hương trầm phảng phất khói sương bay • Lòng thành dâng kính cụ đời đời</span>
       </div>
+
+      {/* --- LIGHT CANDLE MODAL --- */}
+      {showCandleModal && candleMember && (
+        <div className="fixed inset-0 bg-stone-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 print:hidden">
+          <div className="bg-stone-900 border border-amber-500/30 rounded-3xl p-6 shadow-2xl max-w-md w-full text-stone-100 flex flex-col gap-4 relative animate-scale-up">
+            <button
+              onClick={() => {
+                setShowCandleModal(false);
+                setCandleMember(null);
+              }}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-100 transition text-lg font-bold"
+            >
+              ✕
+            </button>
+
+            <div className="text-center pb-2 border-b border-stone-800">
+              <span className="text-amber-500 text-3xl block animate-pulse">🕯️</span>
+              <h3 className="text-amber-100 font-bold text-lg uppercase tracking-wider mt-2">Thắp Nến Tâm Hương Tri Ân</h3>
+              <p className="text-xs text-stone-400 font-bold mt-1">
+                Kính dâng lên hương hồn: <span className="text-amber-300 font-black">{candleMember.name}</span> ({candleMember.title || 'Thành viên'})
+              </p>
+            </div>
+
+            <form onSubmit={handleCandleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Họ Tên Con Cháu Thắp Nến *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ví dụ: Nghiêm Đình Tuấn (Đời 4)"
+                  value={candleAuthor}
+                  onChange={(e) => setCandleAuthor(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-sm text-stone-100 placeholder-stone-600 focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Lời Tri Ân / Lời Khấn Nguyện *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={candleContent}
+                  onChange={(e) => setCandleContent(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-sm text-stone-100 placeholder-stone-600 focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold leading-relaxed"
+                />
+              </div>
+
+              {/* Quick Prayer Suggestions */}
+              <div>
+                <span className="block text-[10px] font-bold text-stone-500 uppercase mb-1.5">Mẫu lời khấn nguyện nhanh:</span>
+                <div className="flex flex-col gap-1.5 max-h-28 overflow-y-auto pr-1">
+                  {[
+                    "Thành tâm kính dâng hương hoa lễ vật, bày tỏ lòng biết ơn sâu sắc đối với công ơn sinh thành dưỡng dục của tiền nhân. Kính cầu hương linh cụ đắc đạo siêu sinh tịnh độ.",
+                    "Kính dâng nén tâm hương thành kính tri ân công đức cụ cao dày. Cầu xin cụ anh linh hiển hách, phù hộ độ trì cho gia đình con cháu luôn mạnh khỏe, bình an, hưng vượng.",
+                    "Chắp tay kính dâng một nén tâm nhang dâng lên hương hồn cụ. Đời đời khắc ghi công lao tiên tổ, nguyện sống hiếu nghĩa và giữ gìn gia phong nề nếp gia tộc."
+                  ].map((tpl, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCandleContent(`Kính dâng nén tâm hương, thành tâm tưởng niệm và tri ân sâu sắc công đức cao dày của Cụ/Ông/Bà ${candleMember.name}. ${tpl}`)}
+                      className="text-left bg-stone-950 hover:bg-stone-800 border border-stone-850 p-2 rounded-lg text-[10px] text-stone-300 font-medium transition leading-normal block cursor-pointer"
+                    >
+                      Mẫu {i + 1}: "{tpl.substring(0, 75)}..."
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCandleModal(false);
+                    setCandleMember(null);
+                  }}
+                  className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  🕯️ Thắp Nến Tri Ân
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
