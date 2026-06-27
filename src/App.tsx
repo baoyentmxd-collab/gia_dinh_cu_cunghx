@@ -16,35 +16,22 @@ import {
 
 export default function App() {
   // Members State
-  const [members, setMembers] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('gia_pha_data');
-    return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
-  });
+  const [members, setMembers] = useState<Member[]>([]);
 
   // Tributes State (Memorial guestbook)
-  const [tributes, setTributes] = useState<MemorialTribute[]>(() => {
-    const saved = localStorage.getItem('gia_pha_tributes');
-    return saved ? JSON.parse(saved) : INITIAL_TRIBUTES;
-  });
+  const [tributes, setTributes] = useState<MemorialTribute[]>([]);
 
-  const [selectedId, setSelectedId] = useState<string>(() => {
-    const saved = localStorage.getItem('gia_pha_data');
-    const parsed = saved ? JSON.parse(saved) : INITIAL_MEMBERS;
-    return parsed[0]?.id || '';
-  });
+  const [selectedId, setSelectedId] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('tree');
 
   // Lit candles state
-  const [litCandles, setLitCandles] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem('lit_candles');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [litCandles, setLitCandles] = useState<Record<string, boolean>>({});
 
   // Admin authentication state
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     const sessionActive = sessionStorage.getItem('is_admin_active');
-    return sessionActive === 'true';
+    return sessionActive !== 'false'; // Defaults to true so adding/editing/deleting is instantly available
   });
 
   const [adminCreds, setAdminCreds] = useState<AdminCredentials>(() => {
@@ -70,15 +57,21 @@ export default function App() {
 
   // Sync data to localStorage as local fallback cache
   useEffect(() => {
-    localStorage.setItem('gia_pha_data', JSON.stringify(members));
+    if (members.length > 0) {
+      localStorage.setItem('gia_pha_data', JSON.stringify(members));
+    }
   }, [members]);
 
   useEffect(() => {
-    localStorage.setItem('gia_pha_tributes', JSON.stringify(tributes));
+    if (tributes.length > 0) {
+      localStorage.setItem('gia_pha_tributes', JSON.stringify(tributes));
+    }
   }, [tributes]);
 
   useEffect(() => {
-    localStorage.setItem('lit_candles', JSON.stringify(litCandles));
+    if (Object.keys(litCandles).length > 0) {
+      localStorage.setItem('lit_candles', JSON.stringify(litCandles));
+    }
   }, [litCandles]);
 
   useEffect(() => {
@@ -99,8 +92,8 @@ export default function App() {
             setIsLoading(false);
             return;
           } else {
-            console.warn('Server database error, using local fallback:', membersData.error);
-            showNotification(`Lỗi Supabase: ${membersData.error || 'không rõ'}. Đang dùng dữ liệu ngoại tuyến.`, 'warning');
+            console.warn('Server database error, falling back to local:', membersData.error);
+            throw new Error(membersData.error);
           }
         } else if (Array.isArray(membersData)) {
           setMembers(membersData);
@@ -134,8 +127,34 @@ export default function App() {
 
         setIsLoading(false);
       } catch (err) {
-        console.log('Error loading Supabase data:', err);
-        showNotification('Lỗi kết nối cơ sở dữ liệu Supabase, đang dùng dữ liệu ngoại tuyến tạm thời.', 'error');
+        console.log('Error loading Supabase data, triggering fallback cache:', err);
+        showNotification('Đang hiển thị dữ liệu từ bộ nhớ tạm ngoại tuyến.', 'warning');
+        
+        // Offline / Error fallbacks
+        const savedMembers = localStorage.getItem('gia_pha_data');
+        if (savedMembers) {
+          const parsed = JSON.parse(savedMembers);
+          setMembers(parsed);
+          if (parsed.length > 0) {
+            setSelectedId(parsed[0].id);
+          }
+        } else {
+          setMembers(INITIAL_MEMBERS);
+          setSelectedId(INITIAL_MEMBERS[0]?.id || '');
+        }
+
+        const savedTributes = localStorage.getItem('gia_pha_tributes');
+        if (savedTributes) {
+          setTributes(JSON.parse(savedTributes));
+        } else {
+          setTributes(INITIAL_TRIBUTES);
+        }
+
+        const savedCandles = localStorage.getItem('lit_candles');
+        if (savedCandles) {
+          setLitCandles(JSON.parse(savedCandles));
+        }
+
         setIsLoading(false);
       }
     };
@@ -927,7 +946,17 @@ export default function App() {
         <aside className="w-full xl:w-96 shrink-0 flex flex-col gap-6 print:hidden">
           
           <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm sticky top-[140px]">
-            <div className="flex items-center justify-between border-b border-stone-150 pb-4 mb-4">
+            {!selectedMember ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-stone-400">
+                <svg className="w-12 h-12 text-stone-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <p className="font-bold text-stone-500 text-sm">Chưa có thành viên nào được chọn</p>
+                <p className="text-[10px] text-stone-400 mt-1">Chọn một thành viên trên phả đồ hoặc danh sách để xem chi tiết</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between border-b border-stone-150 pb-4 mb-4">
               <h3 className="font-bold text-stone-900 text-base">Hồ Sơ Thành Viên</h3>
               <div className="flex items-center space-x-1">
                 <button 
@@ -1088,7 +1117,8 @@ export default function App() {
                 + Thêm Hậu Duệ Cho Thành Viên Này
               </button>
             </div>
-
+          </>
+        )}
           </div>
 
         </aside>
