@@ -246,23 +246,31 @@ export default function App() {
 
     try {
       // Insert new member on server
-      await fetch('/api/members', {
+      const res1 = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newMemberObj),
       });
+      const data1 = await res1.json();
+      if (!res1.ok || data1.error) {
+        throw new Error(data1.details || data1.error || 'Lỗi thêm thành viên');
+      }
 
       // Update relationship structures on server
-      await fetch('/api/members/bulk', {
+      const res2 = await fetch('/api/members/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ members: updatedMembers }),
       });
+      const data2 = await res2.json();
+      if (!res2.ok || data2.error) {
+        throw new Error(data2.details || data2.error || 'Lỗi đồng bộ phả hệ');
+      }
 
       showNotification('Đã thêm thành viên mới và đồng bộ lên Supabase thành công!', 'success');
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error adding member to Supabase:', err);
-      showNotification('Lưu cục bộ thành công, đồng bộ Supabase thất bại!', 'error');
+      showNotification(`Lưu cục bộ thành công, đồng bộ Supabase thất bại! Chi tiết: ${err.message || err}`, 'error');
     }
   };
 
@@ -335,12 +343,12 @@ export default function App() {
         body: JSON.stringify({ members: finalMembers }),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || data.error) throw new Error(data.details || data.error || 'Lỗi đồng bộ phả hệ');
 
       showNotification('Đã cập nhật thành viên và đồng bộ lên Supabase thành công!', 'success');
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error updating members bulk in Supabase:', err);
-      showNotification('Cập nhật cục bộ thành công, đồng bộ Supabase thất bại!', 'error');
+      showNotification(`Cập nhật cục bộ thành công, đồng bộ Supabase thất bại! Chi tiết: ${err.message || err}`, 'error');
     }
   };
 
@@ -389,19 +397,19 @@ export default function App() {
     setSelectedId(updated[0]?.id || '');
 
     try {
-      const res = await fetch('/api/members/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ members: updated }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
-      showNotification('Đã xóa thành viên và đồng bộ hóa lên Supabase thành công!', 'warning');
-    } catch (err) {
-      console.log('Error deleting member in Supabase:', err);
-      showNotification('Xóa cục bộ thành công, đồng bộ Supabase thất bại!', 'error');
-    }
+       const res = await fetch('/api/members/bulk', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ members: updated }),
+       });
+       const data = await res.json();
+       if (!res.ok || data.error) throw new Error(data.details || data.error || 'Lỗi đồng bộ phả hệ');
+ 
+       showNotification('Đã xóa thành viên và đồng bộ hóa lên Supabase thành công!', 'warning');
+     } catch (err: any) {
+       console.log('Error deleting member in Supabase:', err);
+       showNotification(`Xóa cục bộ thành công, đồng bộ Supabase thất bại! Chi tiết: ${err.message || err}`, 'error');
+     }
   };
 
   // Export Data to JSON Back-up file
@@ -476,14 +484,14 @@ export default function App() {
             body: JSON.stringify({ members: parsed }),
           });
           const data = await res.json();
-          if (data.error) throw new Error(data.error);
+          if (!res.ok || data.error) throw new Error(data.details || data.error || 'Lỗi đồng bộ phả hệ');
 
           showNotification('Đã nhập và đồng bộ hóa dữ liệu lên Supabase thành công!', 'success');
         } else {
           showNotification('Định dạng tệp dữ liệu không hợp lệ!', 'error');
         }
-      } catch (err) {
-        showNotification('Có lỗi xảy ra khi đọc hoặc đồng bộ dữ liệu!', 'error');
+      } catch (err: any) {
+        showNotification(`Có lỗi xảy ra khi đọc hoặc đồng bộ dữ liệu! Chi tiết: ${err.message || err}`, 'error');
       }
     };
     fileReader.readAsText(files[0]);
@@ -542,12 +550,12 @@ export default function App() {
         body: JSON.stringify({ username: newUsername, password: newPassword }),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || data.error) throw new Error(data.details || data.error || 'Lỗi lưu thông tin đăng nhập');
 
       showNotification("Thay đổi thông tin đăng nhập quản trị thành công!", "success");
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error updating admin credentials in Supabase:', err);
-      showNotification("Thay đổi cục bộ thành công, đồng bộ Supabase thất bại!", "error");
+      showNotification(`Thay đổi cục bộ thành công, đồng bộ Supabase thất bại! Chi tiết: ${err.message || err}`, "error");
     }
   };
 

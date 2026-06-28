@@ -228,9 +228,15 @@ async function startServer() {
         sql: INITIALIZATION_SQL,
       });
     }
+
+    let details = errorMsg;
+    if (!isServiceRoleKey(SUPABASE_SERVICE_ROLE_KEY)) {
+      details += ' (Cảnh báo: Khóa Supabase hiện tại không phải là service_role. Vui lòng thêm/cập nhật SUPABASE_SERVICE_ROLE_KEY trong Secrets của AI Studio để có đầy đủ quyền thao tác ghi dữ liệu).';
+    }
+
     return res.status(500).json({ 
       error: 'Có lỗi xảy ra khi kết nối cơ sở dữ liệu Supabase',
-      details: errorMsg,
+      details: details,
       code: errorCode
     });
   };
