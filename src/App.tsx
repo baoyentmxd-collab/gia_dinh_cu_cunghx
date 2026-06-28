@@ -562,28 +562,33 @@ export default function App() {
   // Toggle memorial lights
   const handleToggleCandle = async (id: string) => {
     const isLit = !litCandles[id];
-    setLitCandles((prev) => {
-      const next = { ...prev, [id]: isLit };
-      if (isLit) {
-        const deceasedMember = members.find((m) => m.id === id);
-        showNotification(
-          `Đã thắp một ngọn nến thành tâm tri ân chân linh Cụ/Ông/Bà ${
-            deceasedMember ? deceasedMember.name : ''
-          }.`,
-          'success'
-        );
-      }
-      return next;
-    });
+    const nextCandles = { ...litCandles, [id]: isLit };
+    setLitCandles(nextCandles);
+    localStorage.setItem('lit_candles', JSON.stringify(nextCandles));
+
+    if (isLit) {
+      const deceasedMember = members.find((m) => m.id === id);
+      showNotification(
+        `Đã thắp một ngọn nến thành tâm tri ân chân linh Cụ/Ông/Bà ${
+          deceasedMember ? deceasedMember.name : ''
+        }.`,
+        'success'
+      );
+    }
 
     try {
-      await fetch('/api/lit-candles', {
+      const res = await fetch('/api/lit-candles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberId: id, isLit }),
       });
-    } catch (err) {
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.details || data.error || 'Lỗi lưu trạng thái thắp nến');
+      }
+    } catch (err: any) {
       console.log('Error toggling candle in Supabase:', err);
+      showNotification(`Đã lưu cục bộ, nhưng không thể đồng bộ trạng thái thắp nến lên máy chủ! Chi tiết: ${err.message || err}`, 'warning');
     }
   };
 
@@ -968,27 +973,29 @@ export default function App() {
               <>
                 <div className="flex items-center justify-between border-b border-stone-150 pb-4 mb-4">
               <h3 className="font-bold text-stone-900 text-base">Hồ Sơ Thành Viên</h3>
-              <div className="flex items-center space-x-1">
-                <button 
-                  id="aside-btn-edit"
-                  onClick={() => {
-                    if (checkAdminPermission("sửa thông tin thành viên")) {
-                      setShowEditModal(true);
-                    }
-                  }}
-                  className="p-1.5 hover:bg-stone-100 text-stone-600 rounded-lg transition text-xs font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  Sửa
-                </button>
-                <span className="text-stone-300">|</span>
-                <button 
-                  id="aside-btn-delete"
-                  onClick={() => handleDeleteMember(selectedMember.id)}
-                  className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition text-xs font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  Xóa
-                </button>
-              </div>
+              {isAdminLoggedIn && (
+                <div className="flex items-center space-x-1">
+                  <button 
+                    id="aside-btn-edit"
+                    onClick={() => {
+                      if (checkAdminPermission("sửa thông tin thành viên")) {
+                        setShowEditModal(true);
+                      }
+                    }}
+                    className="p-1.5 hover:bg-stone-100 text-stone-600 rounded-lg transition text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    Sửa
+                  </button>
+                  <span className="text-stone-300">|</span>
+                  <button 
+                    id="aside-btn-delete"
+                    onClick={() => handleDeleteMember(selectedMember.id)}
+                    className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Avatar & Title header */}

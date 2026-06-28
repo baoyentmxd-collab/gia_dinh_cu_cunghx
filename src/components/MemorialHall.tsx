@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Member, MemorialTribute } from '../types';
+import { formatSolarDate, solarToLunarStr, calculateAgeInfo } from '../utils/lunar';
 
 interface MemorialHallProps {
   members: Member[];
@@ -132,14 +133,36 @@ export default function MemorialHall({
                   </div>
                 </div>
 
-                <div>
+                <div className="flex-grow flex flex-col justify-center">
                   <h4 className="font-bold text-amber-100 text-base">{m.name}</h4>
-                  <span className="text-xs text-amber-600 font-bold">{m.title}</span>
-                  <p className="text-stone-400 text-xs mt-1 font-bold">
-                    Năm sinh: {m.birthYear || 'Chưa rõ'} - Năm mất: {m.deathYear || 'Chưa rõ'}
-                  </p>
+                  <span className="text-xs text-amber-600 font-bold block">{m.title}</span>
+                  
+                  <div className="text-stone-400 text-xs mt-1.5 font-bold space-y-0.5">
+                    <div>
+                      Dương lịch: {formatSolarDate(m.birthYear)} – {m.isDeceased ? formatSolarDate(m.deathYear) : 'Nay'}
+                    </div>
+                    {solarToLunarStr(m.birthYear) && (
+                      <div className="text-[10px] text-rose-300">
+                        Sinh (Âm): {solarToLunarStr(m.birthYear).replace(' (Âm lịch)', '')}
+                      </div>
+                    )}
+                    {m.isDeceased && solarToLunarStr(m.deathYear) && (
+                      <div className="text-[10px] text-amber-300">
+                        Mất (Âm): {solarToLunarStr(m.deathYear).replace(' (Âm lịch)', '')}
+                      </div>
+                    )}
+                  </div>
+
+                  {calculateAgeInfo(m.birthYear, m.deathYear, m.isDeceased).hasAge && (
+                    <div className="mt-2">
+                      <span className="inline-block text-[11px] text-rose-300 bg-rose-950/50 border border-rose-900/30 px-2 py-0.5 rounded-full font-black">
+                        {calculateAgeInfo(m.birthYear, m.deathYear, m.isDeceased).text}
+                      </span>
+                    </div>
+                  )}
+
                   {m.bio && (
-                    <p className="text-stone-500 text-[10px] mt-2 italic px-2 font-bold leading-relaxed line-clamp-2">
+                    <p className="text-stone-500 text-[10px] mt-2.5 italic px-2 font-bold leading-relaxed line-clamp-2">
                       "{m.bio}"
                     </p>
                   )}

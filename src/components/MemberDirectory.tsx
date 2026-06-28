@@ -214,8 +214,8 @@ export default function MemberDirectory({
                     </span>
                     {solarToLunarStr(member.birthYear) && (
                       <span className="text-[10px] text-stone-400 font-bold">
-                        Âm lịch: {solarToLunarStr(member.birthYear).replace(' (Âm lịch)', '').replace('Ngày ', 'mùng ')} 
-                        {member.isDeceased && member.deathYear && ` – ${solarToLunarStr(member.deathYear).replace(' (Âm lịch)', '').replace('Ngày ', 'mùng ')}`}
+                        Âm lịch: {solarToLunarStr(member.birthYear).replace(' (Âm lịch)', '')} 
+                        {member.isDeceased && member.deathYear && ` – ${solarToLunarStr(member.deathYear).replace(' (Âm lịch)', '')}`}
                       </span>
                     )}
                     {calculateAgeInfo(member.birthYear, member.deathYear, member.isDeceased).hasAge && (
